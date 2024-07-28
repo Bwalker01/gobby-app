@@ -14,26 +14,22 @@ public class CampaignDAO {
 
 	public Campaign getCampaignByName(String name) {
 		List<String> results = db.executeSQL("SELECT * FROM campaigns WHERE campaign_name = ?", name).get(0);
-		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4),
-				results.get(5));
+		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4));
 	}
 
 	public Campaign getCampaignByCategory(String id) {
 		List<String> results = db.executeSQL("SELECT * FROM campaigns WHERE category_id = ?", id).get(0);
-		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4),
-				results.get(5));
+		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4));
 	}
 
 	public Campaign getCampaignByRole(String id) {
 		List<String> results = db.executeSQL("SELECT * FROM campaigns WHERE role_id = ?", id).get(0);
-		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4),
-				results.get(5));
+		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4));
 	}
 
 	public Campaign getCampaignByPost(String id) {
 		List<String> results = db.executeSQL("SELECT * FROM campaigns WHERE post_id = ?", id).get(0);
-		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4),
-				results.get(5));
+		return new Campaign(results.get(0), results.get(1), results.get(2), results.get(3), results.get(4));
 	}
 
 	public void updateCampaign(Campaign campaign) {
