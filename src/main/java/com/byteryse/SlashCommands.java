@@ -188,6 +188,7 @@ public class SlashCommands extends ListenerAdapter {
 								Button.danger("campaign-settings", "Settings"))
 						.build()).queue();
 			} catch (Exception e) {
+				System.out.println(e);
 				event.getHook().sendMessage("Hmmm. Something went wrong.").setEphemeral(true).queue();
 			}
 		} else if (event.getModalId().substring(0, 13).equals("join-request-")) {
