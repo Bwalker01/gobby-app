@@ -38,7 +38,10 @@ public class CampaignDAO {
 	}
 
 	public void createCampaign(Campaign campaign) {
-		// TODO
+		db.executeSQL(
+				"INSERT INTO campaigns (campaign_name, role_id, category_id, status, post_id) VALUES (?,?,?,?,?)",
+				campaign.getName(), campaign.getRole_id(), campaign.getCategory_id(), campaign.getStatusString(),
+				campaign.getPost_id());
 	}
 
 	public void deleteCampaign(Campaign campaign) {
