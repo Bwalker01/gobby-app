@@ -496,6 +496,7 @@ public class SlashCommands extends ListenerAdapter {
 					return;
 				} catch (Exception e) {
 					System.out.println(e);
+					System.out.println(e.getStackTrace().toString());
 					System.out.println("Button ID: " + buttonId);
 				}
 		}
