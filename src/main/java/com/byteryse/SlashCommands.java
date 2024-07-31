@@ -446,7 +446,7 @@ public class SlashCommands extends ListenerAdapter {
 								.getCampaignByCategory(
 										event.getChannel().asThreadChannel().getParentChannel().asTextChannel()
 												.getParentCategory().getId());
-						Member user = event.getGuild().getMemberById(buttonId.substring(12));
+						Member user = event.getGuild().retrieveMemberById(buttonId.substring(12)).complete();
 						event.getGuild()
 								.addRoleToMember(user, event.getGuild().getRoleById(joiningCampaign.getRole_id()))
 								.queue();
@@ -484,8 +484,11 @@ public class SlashCommands extends ListenerAdapter {
 						Campaign campaign2 = campaignDAO
 								.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
 						event.deferEdit().queue();
-						event.getGuild().removeRoleFromMember(event.getGuild().getMemberById(buttonId.substring(14)),
-								event.getGuild().getRoleById(campaign2.getRole_id())).queue();
+						event.getGuild()
+								.removeRoleFromMember(
+										event.getGuild().retrieveMemberById(buttonId.substring(14)).complete(),
+										event.getGuild().getRoleById(campaign2.getRole_id()))
+								.queue();
 						List<ActionRow> rows = event.getMessage().getActionRows().stream()
 								.map(row -> row.getButtons().get(0).equals(event.getButton()) ? row.asDisabled() : row)
 								.toList();
@@ -496,7 +499,7 @@ public class SlashCommands extends ListenerAdapter {
 					return;
 				} catch (Exception e) {
 					System.out.println(e);
-					System.out.println(e.getStackTrace().toString());
+					e.printStackTrace();
 					System.out.println("Button ID: " + buttonId);
 				}
 		}
