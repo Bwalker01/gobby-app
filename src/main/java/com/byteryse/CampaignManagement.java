@@ -1,9 +1,10 @@
 package com.byteryse;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.byteryse.DAO.CampaignDAO;
 import com.byteryse.DTO.Campaign;
-import com.byteryse.Database.DatabaseController;
-
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -12,10 +13,14 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumPost;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -24,11 +29,15 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 public class CampaignManagement {
-	private static final String CAMPAIGN_FORUM = "1263135869645094993";
-	private static final String GAME_ANNOUNCEMENTS = "1252710143838261399";
+	// private static final String CAMPAIGN_FORUM = "1263135869645094993"; TODO
+	private static final String CAMPAIGN_FORUM = "1271126087283376220";
+	// private static final String GAME_ANNOUNCEMENTS = "1252710143838261399"; TODO
+	private static final String GAME_ANNOUNCEMENTS = "1271123624069169224";
+	// private static final String GAME_MASTER_ROLE = "1252378924961370182"; TODO
+	private static final String GAME_MASTER_ROLE = "1271188180569165875";
 
-	public static void campaignCreationModal(SlashCommandInteractionEvent event) {
-		if (!event.getMember().getRoles().contains(event.getGuild().getRoleById("1252378924961370182"))) {
+	public static void CampaignCreationModal(SlashCommandInteractionEvent event) {
+		if (!event.getMember().getRoles().contains(event.getGuild().getRoleById(GAME_MASTER_ROLE))) {
 			event.reply(
 					"You must be a Game Master to create campaigns here. Consider applying to become one if you're interested!")
 					.setEphemeral(true).queue();
@@ -50,7 +59,7 @@ public class CampaignManagement {
 
 		TextInput tags = TextInput.create("tags", "Player Requirements", TextInputStyle.PARAGRAPH)
 				.setPlaceholder(
-						"Example:\n- New/Veteran/All Players\n- Serious/Fun/Novelty Campaign\n- RP/Combat Heavy\n- Saturday/Sunday Availability")
+						"Example:\n- New/Veteran/All Players\n- Serious/Fun/Novelty Campaign\n- RP/Combat Heavy")
 				.setMinLength(1)
 				.setMaxLength(100)
 				.build();
@@ -62,15 +71,14 @@ public class CampaignManagement {
 		event.replyModal(modal).queue();
 	}
 
-	public static void createCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
+	public static void CreateCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
 		if (event.getGuild().getRoles().stream().map(role -> role.getName().toLowerCase()).toList()
 				.contains(event.getValue("name").getAsString().toLowerCase())) {
-			event.reply("Couldn't create campaign. A role likely already exists with that name.")
+			event.getHook().sendMessage("Couldn't create campaign. A role likely already exists with that name.")
 					.setEphemeral(true)
 					.queue();
 			return;
 		}
-		event.deferReply().setEphemeral(true).queue();
 		try {
 			String campaignName = event.getValue("name").getAsString();
 			String campaignDescription = event.getValue("description").getAsString();
@@ -143,7 +151,7 @@ public class CampaignManagement {
 					.filter(channel -> channel.getName().equals("dm-screen")).toList().get(0);
 			textChannel.sendMessage(new MessageCreateBuilder().setContent("**DUNGEON MASTER CONTROLS**")
 					.addActionRow(
-							Button.success("open-close", "Open"),
+							Button.success("open", "Open"),
 							Button.primary("schedule", "Schedule Session"),
 							Button.secondary("availability", "Check Availability"),
 							Button.danger("campaign-settings", "Settings"))
@@ -153,4 +161,179 @@ public class CampaignManagement {
 			event.getHook().sendMessage("Hmmm. Something went wrong.").setEphemeral(true).queue();
 		}
 	}
+
+	public static void RenameCampaignModal(ButtonInteractionEvent event) {
+		TextInput newNameBox = TextInput
+				.create("rename-text", "New Campaign Name",
+						TextInputStyle.SHORT)
+				.setMinLength(3).setMaxLength(25).setRequired(true).build();
+		Modal modal = Modal
+				.create("new-campaign-name", "Rename Campaign")
+				.addComponents(ActionRow.of(newNameBox)).build();
+		event.replyModal(modal).queue();
+	}
+
+	public static void RenameCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
+		event.deferEdit().queue();
+		Category category = event.getChannel().asTextChannel()
+				.getParentCategory();
+		String newName = event.getValue("rename-text").getAsString();
+		String oldName = category.getName();
+		category.getManager().setName(newName).queue();
+		Campaign campaign = campaignDAO.getCampaignByCategory(category.getId());
+		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ThreadChannel post = forum.getThreadChannels().stream()
+				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
+				.toList().get(0);
+		post.getManager().setName(newName).queue();
+		post.sendMessage(String.format("***%s** has changed the campaign name from **%s** to **%s**.*",
+				event.getUser().getAsMention(), oldName, newName)).queue();
+		campaign.setName(newName);
+		campaignDAO.updateCampaign(campaign);
+	}
+
+	public static void DeleteCampaignModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
+		Campaign deleteCampaign = campaignDAO
+				.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
+		TextInput nameBox = TextInput
+				.create("campaign-delete-name", "Enter the name of the campaign to confirm:",
+						TextInputStyle.SHORT)
+				.setRequired(true).setPlaceholder(deleteCampaign.getName()).build();
+		Modal deleteModal = Modal
+				.create("campaign-delete-" + deleteCampaign.getCategory_id(),
+						String.format("Delete %s?", deleteCampaign.getName()))
+				.addComponents(ActionRow.of(nameBox)).build();
+		event.replyModal(deleteModal).queue();
+	}
+
+	public static void DeleteCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
+		Campaign campaignToDelete = campaignDAO.getCampaignByCategory(event.getModalId().substring(16));
+		if (event.getValue("campaign-delete-name").getAsString().equals(campaignToDelete.getName())) {
+			Category categoryToDelete = event.getGuild().getCategoryById(campaignToDelete.getCategory_id());
+			for (GuildChannel channel : categoryToDelete.getChannels()) {
+				channel.delete().queue();
+			}
+			categoryToDelete.delete().queue();
+			ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+			ThreadChannel post = forum.getThreadChannels().stream()
+					.filter(thisPost -> thisPost.getId().equals(campaignToDelete.getPost_id()))
+					.toList().get(0);
+			post.getManager().setAppliedTags(forum.getAvailableTagsByName("ARCHIVED", true)).queue();
+			List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
+			post.editMessageComponentsById(campaignToDelete.getPost_id(), ActionRow.of(buttons.get(0).asDisabled()))
+					.queue();
+			post.getManager().setLocked(true).queue();
+			event.getGuild().getRoleById(campaignToDelete.getRole_id()).delete().queue();
+			campaignDAO.deleteCampaign(campaignToDelete);
+		}
+	}
+
+	public static void OpenCampaign(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
+		Category campaignCategory = event.getChannel().asTextChannel().getParentCategory();
+		Campaign campaign = campaignDAO.getCampaignByCategory(campaignCategory.getId());
+		List<ItemComponent> row = event.getMessage().getActionRows().get(0).getComponents();
+		row.set(0, Button.danger("close", "Close"));
+		event.getMessage().editMessageComponents().setActionRow(row).queue();
+		campaign.open();
+		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ThreadChannel post = forum.getThreadChannels().stream()
+				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
+				.toList().get(0);
+		post.getManager()
+				.setAppliedTags(forum.getAvailableTagsByName("OPEN", true)).queue();
+		List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
+		post.editMessageComponentsById(campaign.getPost_id(), ActionRow.of(buttons.get(0).asEnabled()))
+				.queue();
+		post.sendMessage(
+				"======================================\n:green_circle:  Join submissions have been opened  :green_circle:\n======================================")
+				.queue();
+		event.getMessage().createThreadChannel("Join Applications").complete();
+		event.getChannel().getHistoryFromBeginning(50).queue(
+				history -> history.getRetrievedHistory().stream()
+						.filter(message -> message.getContentRaw().equals("Join Applications"))
+						.forEach(message -> message.delete().queue()));
+		event.getGuild().getNewsChannelById(GAME_ANNOUNCEMENTS)
+				.sendMessage(new MessageCreateBuilder()
+						.addContent("**NEW UPDATE**").setEmbeds(
+								new EmbedBuilder()
+										.setFooter("DM: " + event
+												.getUser()
+												.getEffectiveName(),
+												event.getUser().getAvatarUrl())
+										.setTitle(String.format(
+												"**%s**",
+												campaign.getName()))
+										.appendDescription("*Now accepting join submissions.*")
+										.build())
+						.addActionRow(
+								Button.link(post.retrieveStartMessage().complete()
+										.getJumpUrl(),
+										"Go To Campaign"))
+						.build())
+				.queue();
+		campaignDAO.updateCampaign(campaign);
+	}
+
+	public static void CloseCampaign(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
+		Category campaignCategory = event.getChannel().asTextChannel().getParentCategory();
+		Campaign campaign = campaignDAO.getCampaignByCategory(campaignCategory.getId());
+		List<ItemComponent> row = event.getMessage().getActionRows().get(0).getComponents();
+		row.set(0, Button.success("open", "Open"));
+		event.getMessage().editMessageComponents().setActionRow(row).queue();
+		campaign.close();
+		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ThreadChannel post = forum.getThreadChannels().stream()
+				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
+				.toList().get(0);
+		post.getManager()
+				.setAppliedTags(forum.getAvailableTagsByName("CLOSED", true)).queue();
+		List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
+		post.editMessageComponentsById(campaign.getPost_id(), ActionRow.of(buttons.get(0).asDisabled()))
+				.queue();
+		post.sendMessage(
+				"======================================\n:red_circle:  Join submissions have been closed  :red_circle:\n======================================")
+				.queue();
+		event.getMessage().getStartedThread().delete().queue();
+		event.getGuild().getNewsChannelById(GAME_ANNOUNCEMENTS)
+				.sendMessage(new MessageCreateBuilder()
+						.addContent("**NEW UPDATE**").setEmbeds(
+								new EmbedBuilder()
+										.setFooter("DM: " + event
+												.getUser()
+												.getEffectiveName(),
+												event.getUser().getAvatarUrl())
+										.setTitle(String.format(
+												"**%s**",
+												campaign.getName()))
+										.appendDescription("*Submissions now closed.*")
+										.build())
+						.addActionRow(
+								Button.link(post.retrieveStartMessage().complete()
+										.getJumpUrl(),
+										"Go To Campaign"))
+						.build())
+				.queue();
+		campaignDAO.updateCampaign(campaign);
+	}
+
+	public static void OpenSettings(ButtonInteractionEvent event) {
+		ArrayList<Button> buttons = new ArrayList<Button>(
+				event.getMessage().getActionRows().get(0).getButtons());
+		buttons.set(3, Button.success("close-settings", "Close Settings"));
+		event.getHook()
+				.editMessageComponentsById(event.getMessageId(), ActionRow.of(buttons),
+						ActionRow.of(
+								Button.secondary("rename-campaign", "Rename Campaign"),
+								Button.primary("kick-player", "Kick Player"),
+								Button.danger("archive-campaign", "End Campaign")))
+				.queue();
+	}
+
+	public static void CloseSettings(ButtonInteractionEvent event) {
+		ArrayList<Button> oldButtons = new ArrayList<Button>(
+				event.getMessage().getActionRows().get(0).getButtons());
+		oldButtons.set(3, Button.danger("campaign-settings", "Settings"));
+		event.getHook().editMessageComponentsById(event.getMessageId(), ActionRow.of(oldButtons)).queue();
+	}
+
 }

@@ -18,7 +18,7 @@ public class CommandCreator {
 
 	private static void removeCommands(JDA api) {
 		for (Command command : api.retrieveCommands().complete()) {
-			api.deleteCommandById(command.getId());
+			api.deleteCommandById(command.getId()).complete();
 		}
 		System.out.println("Deleted Existing Commands");
 	}
@@ -26,7 +26,8 @@ public class CommandCreator {
 	private static void fullCommands(JDA api) {
 		api.updateCommands().addCommands(
 				Commands.slash("create-campaign", "Create new campaign.")
-						.setDefaultPermissions(DefaultMemberPermissions.DISABLED));
+						.setDefaultPermissions(DefaultMemberPermissions.DISABLED))
+				.queue();
 		System.out.println("Added All Commands.");
 	}
 }
