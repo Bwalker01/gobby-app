@@ -11,8 +11,10 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -25,11 +27,9 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 public class PlayerManagement {
 
 	public static void JoinRequestModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign thisCampaign = campaignDAO.getCampaignByPost(event.getMessageId());
-		if (thisCampaign.isOpen()) {
-			TextChannel dmScreen = event.getGuild().getCategoryById(thisCampaign.getCategory_id())
-					.getTextChannels()
-					.stream().filter(channel -> channel.getName().equals("dm-screen")).toList().get(0);
+		Campaign campaign = campaignDAO.getCampaignByPost(event.getMessageId());
+		if (campaign.isOpen()) {
+			TextChannel dmScreen = getDmScreen(event, campaign.getCategory_id());
 			ThreadChannel applicationThread = dmScreen.getHistoryFromBeginning(1).complete()
 					.getRetrievedHistory().get(0).getStartedThread();
 			List<Message> applications = applicationThread.getHistoryFromBeginning(100).complete()
@@ -41,13 +41,13 @@ public class PlayerManagement {
 				}
 			}
 			if (usersApplications.size() == 0 && !event.getMember().getRoles()
-					.contains(event.getGuild().getRoleById(thisCampaign.getRole_id()))) {
+					.contains(event.getGuild().getRoleById(campaign.getRole_id()))) {
 				TextInput subject = TextInput
 						.create("request-text", "Your Experience, Preferences, etc",
 								TextInputStyle.PARAGRAPH)
 						.setMaxLength(500).setRequired(false).build();
 				Modal modal = Modal
-						.create("join-request:" + thisCampaign.getCategory_id(), "Tell The DM A Bit About You")
+						.create("join-request:" + campaign.getCategory_id(), "Tell The DM A Bit About You")
 						.addComponents(ActionRow.of(subject)).build();
 				event.replyModal(modal).queue();
 			} else {
@@ -59,9 +59,7 @@ public class PlayerManagement {
 	}
 
 	public static void SendJoinRequest(ModalInteractionEvent event) {
-		TextChannel dmScreen = event.getGuild().getCategoryById(event.getModalId().substring(13))
-				.getTextChannels()
-				.stream().filter(channel -> channel.getName().equals("dm-screen")).toList().get(0);
+		TextChannel dmScreen = getDmScreen(event, event.getModalId().substring(13));
 		dmScreen.getHistoryFromBeginning(1).queue(history -> {
 			ThreadChannel applicationThreads = history.getRetrievedHistory().get(0).getStartedThread();
 			applicationThreads.sendMessage(
@@ -80,10 +78,10 @@ public class PlayerManagement {
 	}
 
 	public static void KickPlayerOptions(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign kickFromCampaign = campaignDAO
+		Campaign campaign = campaignDAO
 				.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
 		ArrayList<ActionRow> players = new ArrayList<>();
-		event.getGuild().getMembersWithRoles(event.getGuild().getRoleById(kickFromCampaign.getRole_id()))
+		event.getGuild().getMembersWithRoles(event.getGuild().getRoleById(campaign.getRole_id()))
 				.forEach(member -> players.add(ActionRow.of(Button.danger("remove-player:" + member.getId(),
 						"Kick " + member.getUser().getEffectiveName()))));
 		if (players.isEmpty()) {
@@ -94,10 +92,10 @@ public class PlayerManagement {
 	}
 
 	public static void KickPlayer(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign campaign2 = campaignDAO
+		Campaign campaign = campaignDAO
 				.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
 		event.getGuild().removeRoleFromMember(event.getGuild().getMemberById(event.getButton().getId().substring(14)),
-				event.getGuild().getRoleById(campaign2.getRole_id())).queue();
+				event.getGuild().getRoleById(campaign.getRole_id())).queue();
 		List<ActionRow> rows = event.getMessage().getActionRows().stream()
 				.map(row -> row.getButtons().get(0).equals(event.getButton()) ? row.asDisabled() : row)
 				.toList();
@@ -105,13 +103,13 @@ public class PlayerManagement {
 	}
 
 	public static void AcceptPlayer(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign joiningCampaign = campaignDAO
+		Campaign campaign = campaignDAO
 				.getCampaignByCategory(
 						event.getChannel().asThreadChannel().getParentChannel().asTextChannel()
 								.getParentCategory().getId());
 		Member user = event.getGuild().getMemberById(event.getButton().getId().substring(12));
 		event.getGuild()
-				.addRoleToMember(user, event.getGuild().getRoleById(joiningCampaign.getRole_id()))
+				.addRoleToMember(user, event.getGuild().getRoleById(campaign.getRole_id()))
 				.queue();
 		event.getMessage()
 				.editMessageComponents(ActionRow.of(Button.secondary("dismiss-request", "Dismiss")))
@@ -125,7 +123,7 @@ public class PlayerManagement {
 				.sendMessage(
 						String.format(
 								"You have been accepted into the campaign **%s**. You'll now be able to find it in the server categories!",
-								joiningCampaign.getName()))
+								campaign.getName()))
 				.queue();
 	}
 
@@ -140,4 +138,11 @@ public class PlayerManagement {
 		event.getMessage().editMessageEmbeds(rejectNewEmbed.build()).queue();
 	}
 
+	private static TextChannel getDmScreen(GenericInteractionCreateEvent event, String categoryId) {
+		Category campaignCategory = event.getGuild().getCategoryById(categoryId);
+		TextChannel dmScreen = campaignCategory
+				.getTextChannels()
+				.stream().filter(channel -> channel.getName().equals("dm-screen")).toList().get(0);
+		return dmScreen;
+	}
 }

@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.forums.ForumPost;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -178,10 +179,7 @@ public class CampaignManagement {
 		String oldName = category.getName();
 		category.getManager().setName(newName).queue();
 		Campaign campaign = campaignDAO.getCampaignByCategory(category.getId());
-		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
-		ThreadChannel post = forum.getThreadChannels().stream()
-				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
-				.toList().get(0);
+		ThreadChannel post = getPost(event, campaign);
 		post.getManager().setName(newName).queue();
 		post.sendMessage(String.format("***%s** has changed the campaign name from **%s** to **%s**.*",
 				event.getUser().getAsMention(), oldName, newName)).queue();
@@ -190,38 +188,36 @@ public class CampaignManagement {
 	}
 
 	public static void DeleteCampaignModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign deleteCampaign = campaignDAO
+		Campaign campaign = campaignDAO
 				.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
 		TextInput nameBox = TextInput
 				.create("campaign-delete-name", "Enter the name of the campaign to confirm:",
 						TextInputStyle.SHORT)
-				.setRequired(true).setPlaceholder(deleteCampaign.getName()).build();
+				.setRequired(true).setPlaceholder(campaign.getName()).build();
 		Modal deleteModal = Modal
-				.create("campaign-delete:" + deleteCampaign.getCategory_id(),
-						String.format("Delete %s?", deleteCampaign.getName()))
+				.create("campaign-delete:" + campaign.getCategory_id(),
+						String.format("Delete %s?", campaign.getName()))
 				.addComponents(ActionRow.of(nameBox)).build();
 		event.replyModal(deleteModal).queue();
 	}
 
 	public static void DeleteCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign campaignToDelete = campaignDAO.getCampaignByCategory(event.getModalId().substring(16));
-		if (event.getValue("campaign-delete-name").getAsString().equals(campaignToDelete.getName())) {
-			Category categoryToDelete = event.getGuild().getCategoryById(campaignToDelete.getCategory_id());
+		Campaign campaign = campaignDAO.getCampaignByCategory(event.getModalId().substring(16));
+		if (event.getValue("campaign-delete-name").getAsString().equals(campaign.getName())) {
+			Category categoryToDelete = event.getGuild().getCategoryById(campaign.getCategory_id());
 			for (GuildChannel channel : categoryToDelete.getChannels()) {
 				channel.delete().queue();
 			}
 			categoryToDelete.delete().queue();
 			ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
-			ThreadChannel post = forum.getThreadChannels().stream()
-					.filter(thisPost -> thisPost.getId().equals(campaignToDelete.getPost_id()))
-					.toList().get(0);
+			ThreadChannel post = getPost(event, campaign);
 			post.getManager().setAppliedTags(forum.getAvailableTagsByName("ARCHIVED", true)).queue();
 			List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
-			post.editMessageComponentsById(campaignToDelete.getPost_id(), ActionRow.of(buttons.get(0).asDisabled()))
+			post.editMessageComponentsById(campaign.getPost_id(), ActionRow.of(buttons.get(0).asDisabled()))
 					.queue();
 			post.getManager().setLocked(true).queue();
-			event.getGuild().getRoleById(campaignToDelete.getRole_id()).delete().queue();
-			campaignDAO.deleteCampaign(campaignToDelete);
+			event.getGuild().getRoleById(campaign.getRole_id()).delete().queue();
+			campaignDAO.deleteCampaign(campaign);
 		}
 	}
 
@@ -233,9 +229,7 @@ public class CampaignManagement {
 		event.getMessage().editMessageComponents().setActionRow(row).queue();
 		campaign.open();
 		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
-		ThreadChannel post = forum.getThreadChannels().stream()
-				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
-				.toList().get(0);
+		ThreadChannel post = getPost(event, campaign);
 		post.getManager()
 				.setAppliedTags(forum.getAvailableTagsByName("OPEN", true)).queue();
 		List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
@@ -279,9 +273,7 @@ public class CampaignManagement {
 		event.getMessage().editMessageComponents().setActionRow(row).queue();
 		campaign.close();
 		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
-		ThreadChannel post = forum.getThreadChannels().stream()
-				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
-				.toList().get(0);
+		ThreadChannel post = getPost(event, campaign);
 		post.getManager()
 				.setAppliedTags(forum.getAvailableTagsByName("CLOSED", true)).queue();
 		List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
@@ -333,4 +325,11 @@ public class CampaignManagement {
 		event.getHook().editMessageComponentsById(event.getMessageId(), ActionRow.of(oldButtons)).queue();
 	}
 
+	private static ThreadChannel getPost(GenericInteractionCreateEvent event, Campaign campaign) {
+		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ThreadChannel post = forum.getThreadChannels().stream()
+				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
+				.toList().get(0);
+		return post;
+	}
 }
