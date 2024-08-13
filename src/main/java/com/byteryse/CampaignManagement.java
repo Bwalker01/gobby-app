@@ -197,7 +197,7 @@ public class CampaignManagement {
 						TextInputStyle.SHORT)
 				.setRequired(true).setPlaceholder(deleteCampaign.getName()).build();
 		Modal deleteModal = Modal
-				.create("campaign-delete-" + deleteCampaign.getCategory_id(),
+				.create("campaign-delete:" + deleteCampaign.getCategory_id(),
 						String.format("Delete %s?", deleteCampaign.getName()))
 				.addComponents(ActionRow.of(nameBox)).build();
 		event.replyModal(deleteModal).queue();

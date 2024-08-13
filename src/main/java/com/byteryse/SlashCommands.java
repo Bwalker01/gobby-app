@@ -1,5 +1,7 @@
 package com.byteryse;
 
+import javax.annotation.Nonnull;
+
 import com.byteryse.DAO.CampaignDAO;
 import com.byteryse.Database.DatabaseController;
 
@@ -16,7 +18,7 @@ public class SlashCommands extends ListenerAdapter {
 	}
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		String command = event.getName();
 		switch (command) {
 			case "create-campaign":
@@ -29,22 +31,30 @@ public class SlashCommands extends ListenerAdapter {
 	}
 
 	@Override
-	public void onModalInteraction(ModalInteractionEvent event) {
+	public void onModalInteraction(@Nonnull ModalInteractionEvent event) {
 		event.deferEdit().queue();
-		String modalId = event.getModalId();
-		if (modalId.equals("create-campaign")) {
-			CampaignManagement.CreateCampaign(event, campaignDAO);
-		} else if (modalId.substring(0, 13).equals("join-request-")) {
-			PlayerManagement.SendJoinRequest(event);
-		} else if (modalId.equals("new-campaign-name")) {
-			CampaignManagement.RenameCampaign(event, campaignDAO);
-		} else if (modalId.substring(0, 16).equals("campaign-delete-")) {
-			CampaignManagement.DeleteCampaign(event, campaignDAO);
+		String[] modalArgs = event.getModalId().split(":");
+		String modalId = modalArgs[0];
+		switch (modalId) {
+			case "create-campaign":
+				CampaignManagement.CreateCampaign(event, campaignDAO);
+				return;
+			case "join-request":
+				PlayerManagement.SendJoinRequest(event);
+				return;
+			case "new-campaign-name":
+				CampaignManagement.RenameCampaign(event, campaignDAO);
+				return;
+			case "campaign-delete":
+				CampaignManagement.DeleteCampaign(event, campaignDAO);
+			default:
+				event.getHook().sendMessage("Something went wrong.").setEphemeral(true).queue();
+				System.out.println("Error; button not found\nModal ID: " + modalId);
 		}
 	}
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String[] interactionArgs = event.getComponentId().split(":");
 		String buttonId = interactionArgs[0];
 		switch (buttonId) {

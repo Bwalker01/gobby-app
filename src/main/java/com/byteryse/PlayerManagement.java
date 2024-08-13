@@ -47,7 +47,7 @@ public class PlayerManagement {
 								TextInputStyle.PARAGRAPH)
 						.setMaxLength(500).setRequired(false).build();
 				Modal modal = Modal
-						.create("join-request-" + thisCampaign.getCategory_id(), "Tell The DM A Bit About You")
+						.create("join-request:" + thisCampaign.getCategory_id(), "Tell The DM A Bit About You")
 						.addComponents(ActionRow.of(subject)).build();
 				event.replyModal(modal).queue();
 			} else {
