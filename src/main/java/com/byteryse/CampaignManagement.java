@@ -30,9 +30,9 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 public class CampaignManagement {
-	private static final String CAMPAIGN_FORUM = "1263135869645094993";
-	private static final String GAME_ANNOUNCEMENTS = "1252710143838261399";
-	private static final String GAME_MASTER_ROLE = "1252378924961370182";
+	private static final String CAMPAIGN_FORUM = System.getenv("CAMPAIGN_FORUM");
+	private static final String GAME_ANNOUNCEMENTS = System.getenv("ANNOUNCEMENT_CHANNEL");
+	private static final String GAME_MASTER_ROLE = System.getenv("DM_ROLE");
 
 	public static void CampaignCreationModal(SlashCommandInteractionEvent event) {
 		if (!event.getMember().getRoles().contains(event.getGuild().getRoleById(GAME_MASTER_ROLE))) {
@@ -172,7 +172,6 @@ public class CampaignManagement {
 	}
 
 	public static void RenameCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
-		event.deferEdit().queue();
 		Category category = event.getChannel().asTextChannel()
 				.getParentCategory();
 		String newName = event.getValue("rename-text").getAsString();
