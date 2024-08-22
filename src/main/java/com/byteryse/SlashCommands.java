@@ -47,6 +47,7 @@ public class SlashCommands extends ListenerAdapter {
 				return;
 			case "campaign-delete":
 				CampaignManagement.DeleteCampaign(event, campaignDAO);
+				return;
 			default:
 				event.getHook().sendMessage("Something went wrong.").setEphemeral(true).queue();
 				System.out.println("Error; button not found\nModal ID: " + modalId);

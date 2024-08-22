@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -223,9 +224,11 @@ public class CampaignManagement {
 	public static void OpenCampaign(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
 		Category campaignCategory = event.getChannel().asTextChannel().getParentCategory();
 		Campaign campaign = campaignDAO.getCampaignByCategory(campaignCategory.getId());
-		List<ItemComponent> row = event.getMessage().getActionRows().get(0).getComponents();
-		row.set(0, Button.danger("close", "Close"));
-		event.getMessage().editMessageComponents().setActionRow(row).queue();
+		ArrayList<LayoutComponent> actionRows = new ArrayList<>(event.getMessage().getComponents());
+		List<ItemComponent> firstRow = actionRows.get(0).getComponents();
+		firstRow.set(0, Button.danger("close", "Close"));
+		actionRows.set(0, ActionRow.of(firstRow));
+		event.getMessage().editMessageComponents().setComponents(actionRows).queue();
 		campaign.open();
 		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
 		ThreadChannel post = getPost(event, campaign);
@@ -267,9 +270,11 @@ public class CampaignManagement {
 	public static void CloseCampaign(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
 		Category campaignCategory = event.getChannel().asTextChannel().getParentCategory();
 		Campaign campaign = campaignDAO.getCampaignByCategory(campaignCategory.getId());
-		List<ItemComponent> row = event.getMessage().getActionRows().get(0).getComponents();
-		row.set(0, Button.success("open", "Open"));
-		event.getMessage().editMessageComponents().setActionRow(row).queue();
+		ArrayList<LayoutComponent> actionRows = new ArrayList<>(event.getMessage().getComponents());
+		List<ItemComponent> firstRow = actionRows.get(0).getComponents();
+		firstRow.set(0, Button.success("open", "Open"));
+		actionRows.set(0, ActionRow.of(firstRow));
+		event.getMessage().editMessageComponents().setComponents(actionRows).queue();
 		campaign.close();
 		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
 		ThreadChannel post = getPost(event, campaign);
