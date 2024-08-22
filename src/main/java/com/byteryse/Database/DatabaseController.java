@@ -20,7 +20,6 @@ public class DatabaseController {
 		try {
 			return DriverManager.getConnection(db.getUrl(), db.getUsername(), db.getPassword());
 		} catch (SQLException e) {
-			System.err.println(e);
 			System.err.println(e.getStackTrace());
 			return null;
 		}
@@ -48,8 +47,9 @@ public class DatabaseController {
 			}
 			return results;
 		} catch (SQLException e) {
-			System.err.println(e.toString());
-			e.printStackTrace();
+			if (!e.getMessage().equals("No results were returned by the query.")) {
+				e.printStackTrace();
+			}
 			return null;
 		}
 	}
