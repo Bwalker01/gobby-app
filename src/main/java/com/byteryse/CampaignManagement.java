@@ -123,7 +123,7 @@ public class CampaignManagement {
 			ForumPost post = forum.createForumPost(campaignName, forumPost)
 					.setTags(forum.getAvailableTagsByName("PREPARING", false)).complete();
 			Campaign campaign = new Campaign(campaignName, player.getId(), category.getId(),
-					post.getThreadChannel().getId());
+					post.getThreadChannel().getId(), gameMaster.getId());
 			campaignDAO.createCampaign(campaign);
 			event.getHook().sendMessage("Campaign Created Successfully.").setEphemeral(true).queue();
 			guild.getNewsChannelById(GAME_ANNOUNCEMENTS)
@@ -179,6 +179,8 @@ public class CampaignManagement {
 		String oldName = category.getName();
 		category.getManager().setName(newName).queue();
 		Campaign campaign = campaignDAO.getCampaignByCategory(category.getId());
+		event.getGuild().getRoleById(campaign.getRole_id()).getManager().setName(newName).queue();
+		event.getGuild().getRoleById(campaign.getDm_role_id()).getManager().setName(newName + " DM").queue();
 		ThreadChannel post = getPost(event, campaign);
 		post.getManager().setName(newName).queue();
 		post.sendMessage(String.format("***%s** has changed the campaign name from **%s** to **%s**.*",
@@ -217,6 +219,7 @@ public class CampaignManagement {
 					.queue();
 			post.getManager().setLocked(true).queue();
 			event.getGuild().getRoleById(campaign.getRole_id()).delete().queue();
+			event.getGuild().getRoleById(campaign.getDm_role_id()).delete().queue();
 			campaignDAO.deleteCampaign(campaign);
 		}
 	}
