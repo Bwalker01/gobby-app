@@ -16,22 +16,25 @@ public class Campaign {
 	private String category_id;
 	private Status status;
 	private String post_id;
+	private String dm_role_id;
 
-	public Campaign(String name, String role_id, String category_id, String post_id) {
+	public Campaign(String name, String role_id, String category_id, String post_id, String dm_role_id) {
 		this.name = name;
 		this.role_id = role_id;
 		this.category_id = category_id;
 		this.post_id = post_id;
+		this.dm_role_id = dm_role_id;
 		this.status = Status.PREPARING;
 	}
 
 	public Campaign(String name, String role_id, String category_id, String status,
-			String post_id) {
+			String post_id, String dm_role_id) {
 		this.name = name;
 		this.role_id = role_id;
 		this.status = Status.valueOf(status);
 		this.category_id = category_id;
 		this.post_id = post_id;
+		this.dm_role_id = dm_role_id;
 	}
 
 	public String getCategory_id() {
@@ -56,6 +59,10 @@ public class Campaign {
 
 	public String getStatusString() {
 		return status.toString();
+	}
+
+	public String getDm_role_id() {
+		return dm_role_id;
 	}
 
 	public void open() {
