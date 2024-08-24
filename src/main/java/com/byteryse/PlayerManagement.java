@@ -40,8 +40,17 @@ public class PlayerManagement {
 					usersApplications.add(message);
 				}
 			}
-			if (usersApplications.size() == 0 && !event.getMember().getRoles()
+			if (event.getMember().getRoles()
 					.contains(event.getGuild().getRoleById(campaign.getRole_id()))) {
+				event.reply("You're already in this campaign!").setEphemeral(true).queue();
+				return;
+			}
+			if (event.getMember().getRoles().contains(event.getGuild().getRoleById(campaign.getDm_role_id()))) {
+				event.reply("You're DMing this campaign!").setEphemeral(true).queue();
+				return;
+			}
+
+			if (usersApplications.size() == 0) {
 				TextInput subject = TextInput
 						.create("request-text", "Your Experience, Preferences, etc",
 								TextInputStyle.PARAGRAPH)
@@ -54,7 +63,7 @@ public class PlayerManagement {
 				event.reply("You're already applied!").setEphemeral(true).queue();
 			}
 		} else {
-			event.getHook().sendMessage("This campaign is closed.").setEphemeral(true).queue();
+			event.reply("This campaign is closed.").setEphemeral(true).queue();
 		}
 	}
 
