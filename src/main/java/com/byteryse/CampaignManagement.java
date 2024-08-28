@@ -73,11 +73,18 @@ public class CampaignManagement {
 	public static void CreateCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
 		if (event.getGuild().getRoles().stream().map(role -> role.getName().toLowerCase()).toList()
 				.contains(event.getValue("name").getAsString().toLowerCase())) {
-			event.getHook().sendMessage("Couldn't create campaign. A role likely already exists with that name.")
-					.setEphemeral(true)
-					.queue();
+			event.getHook().sendMessage("Couldn't create campaign. A role already exists with that name.")
+					.setEphemeral(true).queue();
 			return;
 		}
+
+		if (event.getGuild().getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
+				.contains(event.getValue("name").getAsString().toLowerCase())) {
+			event.getHook().sendMessage("Couldn't create campaign. A category already exists with that name.")
+					.setEphemeral(true).queue();
+			return;
+		}
+
 		try {
 			String campaignName = event.getValue("name").getAsString();
 			String campaignDescription = event.getValue("description").getAsString();
@@ -173,6 +180,20 @@ public class CampaignManagement {
 	}
 
 	public static void RenameCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
+		if (event.getGuild().getCategories().stream().map(role -> role.getName().toLowerCase()).toList()
+				.contains(event.getValue("rename-text").getAsString().toLowerCase())) {
+			event.getHook().sendMessage("Couldn't rename campaign. A role already exists with that name.")
+					.setEphemeral(true).queue();
+			return;
+		}
+
+		if (event.getGuild().getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
+				.contains(event.getValue("rename-text").getAsString().toLowerCase())) {
+			event.getHook().sendMessage("Couldn't rename campaign. A category already exists with that name.")
+					.setEphemeral(true).queue();
+			return;
+		}
+
 		Category category = event.getChannel().asTextChannel()
 				.getParentCategory();
 		String newName = event.getValue("rename-text").getAsString();
