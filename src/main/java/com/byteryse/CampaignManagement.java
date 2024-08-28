@@ -36,7 +36,7 @@ public class CampaignManagement {
 	private static final String GAME_MASTER_ROLE = System.getenv("DM_ROLE");
 
 	public static void CampaignCreationModal(SlashCommandInteractionEvent event) {
-		if (!event.getMember().getRoles().contains(event.getGuild().getRoleById(GAME_MASTER_ROLE))) {
+		if (!getMember(event).getRoles().contains(getGuild(event).getRoleById(GAME_MASTER_ROLE))) {
 			event.reply(
 					"You must be a Game Master to create campaigns here. Consider applying to become one if you're interested!")
 					.setEphemeral(true).queue();
@@ -71,14 +71,14 @@ public class CampaignManagement {
 	}
 
 	public static void CreateCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
-		if (event.getGuild().getRoles().stream().map(role -> role.getName().toLowerCase()).toList()
+		if (getGuild(event).getRoles().stream().map(role -> role.getName().toLowerCase()).toList()
 				.contains(event.getValue("name").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't create campaign. A role already exists with that name.")
 					.setEphemeral(true).queue();
 			return;
 		}
 
-		if (event.getGuild().getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
+		if (getGuild(event).getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
 				.contains(event.getValue("name").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't create campaign. A category already exists with that name.")
 					.setEphemeral(true).queue();
@@ -89,9 +89,9 @@ public class CampaignManagement {
 			String campaignName = event.getValue("name").getAsString();
 			String campaignDescription = event.getValue("description").getAsString();
 			String campaignTags = event.getValue("tags").getAsString();
-			Member DM = event.getMember();
+			Member DM = getMember(event);
 
-			Guild guild = event.getGuild();
+			Guild guild = getGuild(event);
 			Role player = guild.createRole().setName(campaignName).complete();
 			Role gameMaster = guild.createRole().setName(campaignName + " DM").complete();
 			guild.addRoleToMember(DM, gameMaster).queue();
@@ -133,25 +133,14 @@ public class CampaignManagement {
 					post.getThreadChannel().getId(), gameMaster.getId());
 			campaignDAO.createCampaign(campaign);
 			event.getHook().sendMessage("Campaign Created Successfully.").setEphemeral(true).queue();
-			guild.getNewsChannelById(GAME_ANNOUNCEMENTS)
-					.sendMessage(new MessageCreateBuilder()
-							.addContent("**NEW CAMPAIGN**").setEmbeds(
-									new EmbedBuilder()
-											.setFooter("By " + event
-													.getUser()
-													.getEffectiveName(),
-													event.getUser().getAvatarUrl())
-											.setTitle(String.format(
-													"**%s**",
-													campaignName))
-											.appendDescription(
-													campaignDescription)
-											.build())
-							.addActionRow(
-									Button.link(post.getMessage()
-											.getJumpUrl(),
-											"Go To Campaign"))
+			guild.getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
+					.addContent("**NEW CAMPAIGN**").setEmbeds(new EmbedBuilder()
+							.setFooter("By " + event.getUser().getEffectiveName(), event.getUser().getAvatarUrl())
+							.setTitle(String.format("**%s**", campaignName))
+							.appendDescription(campaignDescription)
 							.build())
+					.addActionRow(Button.link(post.getMessage().getJumpUrl(), "Go To Campaign"))
+					.build())
 					.queue();
 			TextChannel textChannel = (TextChannel) category.getChannels().stream()
 					.filter(channel -> channel.getName().equals("dm-screen")).toList().get(0);
@@ -180,14 +169,14 @@ public class CampaignManagement {
 	}
 
 	public static void RenameCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
-		if (event.getGuild().getCategories().stream().map(role -> role.getName().toLowerCase()).toList()
+		if (getGuild(event).getCategories().stream().map(role -> role.getName().toLowerCase()).toList()
 				.contains(event.getValue("rename-text").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't rename campaign. A role already exists with that name.")
 					.setEphemeral(true).queue();
 			return;
 		}
 
-		if (event.getGuild().getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
+		if (getGuild(event).getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
 				.contains(event.getValue("rename-text").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't rename campaign. A category already exists with that name.")
 					.setEphemeral(true).queue();
@@ -200,8 +189,8 @@ public class CampaignManagement {
 		String oldName = category.getName();
 		category.getManager().setName(newName).queue();
 		Campaign campaign = campaignDAO.getCampaignByCategory(category.getId());
-		event.getGuild().getRoleById(campaign.getRole_id()).getManager().setName(newName).queue();
-		event.getGuild().getRoleById(campaign.getDm_role_id()).getManager().setName(newName + " DM").queue();
+		getGuild(event).getRoleById(campaign.getRole_id()).getManager().setName(newName).queue();
+		getGuild(event).getRoleById(campaign.getDm_role_id()).getManager().setName(newName + " DM").queue();
 		ThreadChannel post = getPost(event, campaign);
 		post.getManager().setName(newName).queue();
 		post.sendMessage(String.format("***%s** has changed the campaign name from **%s** to **%s**.*",
@@ -227,20 +216,20 @@ public class CampaignManagement {
 	public static void DeleteCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
 		Campaign campaign = campaignDAO.getCampaignByCategory(event.getModalId().substring(16));
 		if (event.getValue("campaign-delete-name").getAsString().equals(campaign.getName())) {
-			Category categoryToDelete = event.getGuild().getCategoryById(campaign.getCategory_id());
+			Category categoryToDelete = getGuild(event).getCategoryById(campaign.getCategory_id());
 			for (GuildChannel channel : categoryToDelete.getChannels()) {
 				channel.delete().queue();
 			}
 			categoryToDelete.delete().queue();
-			ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+			ForumChannel forum = getGuild(event).getForumChannelById(CAMPAIGN_FORUM);
 			ThreadChannel post = getPost(event, campaign);
 			post.getManager().setAppliedTags(forum.getAvailableTagsByName("ARCHIVED", true)).queue();
 			List<Button> buttons = post.retrieveStartMessage().complete().getButtons();
 			post.editMessageComponentsById(campaign.getPost_id(), ActionRow.of(buttons.get(0).asDisabled()))
 					.queue();
 			post.getManager().setLocked(true).queue();
-			event.getGuild().getRoleById(campaign.getRole_id()).delete().queue();
-			event.getGuild().getRoleById(campaign.getDm_role_id()).delete().queue();
+			getGuild(event).getRoleById(campaign.getRole_id()).delete().queue();
+			getGuild(event).getRoleById(campaign.getDm_role_id()).delete().queue();
 			campaignDAO.deleteCampaign(campaign);
 		}
 	}
@@ -254,7 +243,7 @@ public class CampaignManagement {
 		actionRows.set(0, ActionRow.of(firstRow));
 		event.getMessage().editMessageComponents().setComponents(actionRows).queue();
 		campaign.open();
-		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ForumChannel forum = getGuild(event).getForumChannelById(CAMPAIGN_FORUM);
 		ThreadChannel post = getPost(event, campaign);
 		post.getManager()
 				.setAppliedTags(forum.getAvailableTagsByName("OPEN", true)).queue();
@@ -269,24 +258,14 @@ public class CampaignManagement {
 				history -> history.getRetrievedHistory().stream()
 						.filter(message -> message.getContentRaw().equals("Join Applications"))
 						.forEach(message -> message.delete().queue()));
-		event.getGuild().getNewsChannelById(GAME_ANNOUNCEMENTS)
-				.sendMessage(new MessageCreateBuilder()
-						.addContent("**NEW UPDATE**").setEmbeds(
-								new EmbedBuilder()
-										.setFooter("DM: " + event
-												.getUser()
-												.getEffectiveName(),
-												event.getUser().getAvatarUrl())
-										.setTitle(String.format(
-												"**%s**",
-												campaign.getName()))
-										.appendDescription("*Now accepting join submissions.*")
-										.build())
-						.addActionRow(
-								Button.link(post.retrieveStartMessage().complete()
-										.getJumpUrl(),
-										"Go To Campaign"))
+		getGuild(event).getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
+				.addContent("**NEW UPDATE**").setEmbeds(new EmbedBuilder()
+						.setFooter("DM: " + event.getUser().getEffectiveName(), event.getUser().getAvatarUrl())
+						.setTitle(String.format("**%s**", campaign.getName()))
+						.appendDescription("*Now accepting join submissions.*")
 						.build())
+				.addActionRow(Button.link(post.retrieveStartMessage().complete().getJumpUrl(), "Go To Campaign"))
+				.build())
 				.queue();
 		campaignDAO.updateCampaign(campaign);
 	}
@@ -300,7 +279,7 @@ public class CampaignManagement {
 		actionRows.set(0, ActionRow.of(firstRow));
 		event.getMessage().editMessageComponents().setComponents(actionRows).queue();
 		campaign.close();
-		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ForumChannel forum = getGuild(event).getForumChannelById(CAMPAIGN_FORUM);
 		ThreadChannel post = getPost(event, campaign);
 		post.getManager()
 				.setAppliedTags(forum.getAvailableTagsByName("CLOSED", true)).queue();
@@ -311,23 +290,17 @@ public class CampaignManagement {
 				"======================================\n:red_circle:  Join submissions have been closed  :red_circle:\n======================================")
 				.queue();
 		event.getMessage().getStartedThread().delete().queue();
-		event.getGuild().getNewsChannelById(GAME_ANNOUNCEMENTS)
-				.sendMessage(new MessageCreateBuilder()
+		getGuild(event)
+				.getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
 						.addContent("**NEW UPDATE**").setEmbeds(
 								new EmbedBuilder()
-										.setFooter("DM: " + event
-												.getUser()
-												.getEffectiveName(),
+										.setFooter("DM: " + event.getUser().getEffectiveName(),
 												event.getUser().getAvatarUrl())
-										.setTitle(String.format(
-												"**%s**",
-												campaign.getName()))
+										.setTitle(String.format("**%s**", campaign.getName()))
 										.appendDescription("*Submissions now closed.*")
 										.build())
 						.addActionRow(
-								Button.link(post.retrieveStartMessage().complete()
-										.getJumpUrl(),
-										"Go To Campaign"))
+								Button.link(post.retrieveStartMessage().complete().getJumpUrl(), "Go To Campaign"))
 						.build())
 				.queue();
 		campaignDAO.updateCampaign(campaign);
@@ -354,10 +327,26 @@ public class CampaignManagement {
 	}
 
 	private static ThreadChannel getPost(GenericInteractionCreateEvent event, Campaign campaign) {
-		ForumChannel forum = event.getGuild().getForumChannelById(CAMPAIGN_FORUM);
+		ForumChannel forum = getGuild(event).getForumChannelById(CAMPAIGN_FORUM);
 		ThreadChannel post = forum.getThreadChannels().stream()
 				.filter(thisPost -> thisPost.getId().equals(campaign.getPost_id()))
 				.toList().get(0);
 		return post;
+	}
+
+	private static Guild getGuild(GenericInteractionCreateEvent event) {
+		Guild guild = event.getGuild();
+		if (guild == null) {
+			throw new IllegalArgumentException("Guild is unexpectedly null.");
+		}
+		return guild;
+	}
+
+	private static Member getMember(GenericInteractionCreateEvent event) {
+		Member member = event.getMember();
+		if (member == null) {
+			throw new IllegalArgumentException("Member is unexpectedly null.");
+		}
+		return member;
 	}
 }
