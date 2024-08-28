@@ -79,7 +79,7 @@ public class CampaignManagement {
 			return;
 		}
 
-		if (event.getGuild().getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
+		if (getGuild(event).getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
 				.contains(event.getValue("name").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't create campaign. A category already exists with that name.")
 					.setEphemeral(true).queue();
