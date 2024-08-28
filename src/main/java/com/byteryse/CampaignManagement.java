@@ -79,7 +79,7 @@ public class CampaignManagement {
 			return;
 		}
 
-		if (getGuild(event).getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
+		if (event.getGuild().getCategories().stream().map(category -> category.getName().toLowerCase()).toList()
 				.contains(event.getValue("name").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't create campaign. A category already exists with that name.")
 					.setEphemeral(true).queue();
@@ -170,7 +170,7 @@ public class CampaignManagement {
 	}
 
 	public static void RenameCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
-		if (getGuild(event).getCategories().stream().map(role -> role.getName().toLowerCase()).toList()
+		if (getGuild(event).getRoles().stream().map(role -> role.getName().toLowerCase()).toList()
 				.contains(event.getValue("rename-text").getAsString().toLowerCase())) {
 			event.getHook().sendMessage("Couldn't rename campaign. A role already exists with that name.")
 					.setEphemeral(true).queue();
