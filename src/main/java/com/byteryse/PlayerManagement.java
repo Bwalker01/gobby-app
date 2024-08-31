@@ -112,11 +112,12 @@ public class PlayerManagement {
 	}
 
 	public static void AcceptPlayer(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
+		String[] eventArgs = event.getComponentId().split(":");
 		Campaign campaign = campaignDAO
 				.getCampaignByCategory(
 						event.getChannel().asThreadChannel().getParentChannel().asTextChannel()
 								.getParentCategory().getId());
-		Member user = event.getGuild().getMemberById(event.getButton().getId().substring(12));
+		Member user = event.getGuild().getMemberById(eventArgs[1]);
 		event.getGuild()
 				.addRoleToMember(user, event.getGuild().getRoleById(campaign.getRole_id()))
 				.queue();
