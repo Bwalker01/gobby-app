@@ -117,7 +117,7 @@ public class PlayerManagement {
 				.getCampaignByCategory(
 						event.getChannel().asThreadChannel().getParentChannel().asTextChannel()
 								.getParentCategory().getId());
-		Member user = event.getGuild().getMemberById(eventArgs[1]);
+		Member user = event.getGuild().retrieveMemberById(eventArgs[1]).complete();
 		event.getGuild()
 				.addRoleToMember(user, event.getGuild().getRoleById(campaign.getRole_id()))
 				.queue();
