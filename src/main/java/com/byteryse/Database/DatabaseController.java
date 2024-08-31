@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class DatabaseController {
-	private final Connection connection;
+	private Connection connection;
 	private final DBConfig db;
 
 	public DatabaseController() {
@@ -47,10 +47,28 @@ public class DatabaseController {
 			}
 			return results;
 		} catch (SQLException e) {
+			if (!validateConnection()) {
+				System.err.println("Connection was invalid:");
+				e.printStackTrace();
+				this.connection = connect();
+				return this.executeSQL(sql, params);
+			}
 			if (!e.getMessage().equals("No results were returned by the query.")) {
 				e.printStackTrace();
 			}
 			return null;
+		}
+	}
+
+	private boolean validateConnection() {
+		try {
+			if (this.connection.isValid(100)) {
+				return true;
+			}
+			return false;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
 		}
 	}
 }
