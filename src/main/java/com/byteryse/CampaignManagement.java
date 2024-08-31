@@ -136,22 +136,13 @@ public class CampaignManagement {
 			event.getHook().sendMessage("Campaign Created Successfully.").setEphemeral(true).queue();
 			guild.getNewsChannelById(GAME_ANNOUNCEMENTS)
 					.sendMessage(new MessageCreateBuilder()
-							.addContent("**NEW CAMPAIGN**").setEmbeds(
-									new EmbedBuilder()
-											.setFooter("By " + event
-													.getUser()
-													.getEffectiveName(),
-													event.getUser().getAvatarUrl())
-											.setTitle(String.format(
-													"**%s**",
-													campaignName))
-											.appendDescription(
-													campaignDescription)
-											.build())
-							.addActionRow(
-									Button.link(post.getMessage()
-											.getJumpUrl(),
-											"Go To Campaign"))
+							.addContent("**NEW CAMPAIGN**").setEmbeds(new EmbedBuilder()
+									.setFooter("By " + event.getUser().getEffectiveName(),
+											event.getUser().getAvatarUrl())
+									.setTitle(String.format("**%s**", campaignName))
+									.appendDescription(campaignDescription)
+									.build())
+							.addActionRow(Button.link(post.getMessage().getJumpUrl(), "Go To Campaign"))
 							.build())
 					.queue();
 			TextChannel textChannel = (TextChannel) category.getChannels().stream()
@@ -272,21 +263,13 @@ public class CampaignManagement {
 						.forEach(message -> message.delete().queue()));
 		event.getGuild().getNewsChannelById(GAME_ANNOUNCEMENTS)
 				.sendMessage(new MessageCreateBuilder()
-						.addContent("**NEW UPDATE**").setEmbeds(
-								new EmbedBuilder()
-										.setFooter("DM: " + event
-												.getUser()
-												.getEffectiveName(),
-												event.getUser().getAvatarUrl())
-										.setTitle(String.format(
-												"**%s**",
-												campaign.getCampaign_name()))
-										.appendDescription("*Now accepting join submissions.*")
-										.build())
+						.addContent("**NEW UPDATE**").setEmbeds(new EmbedBuilder()
+								.setFooter("DM: " + event.getUser().getEffectiveName(), event.getUser().getAvatarUrl())
+								.setTitle(String.format("**%s**", campaign.getCampaign_name()))
+								.appendDescription("*Now accepting join submissions.*")
+								.build())
 						.addActionRow(
-								Button.link(post.retrieveStartMessage().complete()
-										.getJumpUrl(),
-										"Go To Campaign"))
+								Button.link(post.retrieveStartMessage().complete().getJumpUrl(), "Go To Campaign"))
 						.build())
 				.queue();
 		campaignDAO.updateCampaign(campaign);
