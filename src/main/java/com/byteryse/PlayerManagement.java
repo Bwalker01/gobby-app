@@ -73,11 +73,10 @@ public class PlayerManagement {
 			ThreadChannel applicationThreads = history.getRetrievedHistory().get(0).getStartedThread();
 			applicationThreads.sendMessage(
 					new MessageCreateBuilder()
-							.setContent(
-									String.format("**%s** has applied to join:", event.getUser().getAsMention()))
-							.addEmbeds(
-									new EmbedBuilder().setTitle(event.getUser().getEffectiveName())
-											.setDescription(event.getValue("request-text").getAsString()).build())
+							.setContent(String.format("**%s** has applied to join:", event.getUser().getAsMention()))
+							.addEmbeds(new EmbedBuilder()
+									.setTitle(event.getUser().getEffectiveName())
+									.setDescription(event.getValue("request-text").getAsString()).build())
 							.addActionRow(Button.success("join-accept:" + event.getUser().getId(), "Accept"),
 									Button.danger("join-reject:" + event.getUser().getId(), "Reject"))
 							.build())
