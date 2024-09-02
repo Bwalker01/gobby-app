@@ -6,6 +6,9 @@ import java.util.List;
 import com.byteryse.Database.CampaignDAO;
 import com.byteryse.DTOs.Campaign;
 
+import com.byteryse.Templates.EmbedTemplates;
+import com.byteryse.Templates.ModalTemplates;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -25,9 +28,6 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
@@ -44,31 +44,7 @@ public class CampaignManagement {
 			return;
 		}
 
-		TextInput name = TextInput.create("name", "Name", TextInputStyle.SHORT)
-				.setPlaceholder("The name of your campaign")
-				.setMinLength(3)
-				.setMaxLength(25)
-				.setRequired(true)
-				.build();
-
-		TextInput description = TextInput.create("description", "Description", TextInputStyle.PARAGRAPH)
-				.setPlaceholder("A short(ish) description.")
-				.setMinLength(1)
-				.setMaxLength(500)
-				.build();
-
-		TextInput tags = TextInput.create("tags", "Player Requirements", TextInputStyle.PARAGRAPH)
-				.setPlaceholder(
-						"Example:\n- New/Veteran/All Players\n- Serious/Fun/Novelty Campaign\n- RP/Combat Heavy")
-				.setMinLength(1)
-				.setMaxLength(100)
-				.build();
-
-		Modal modal = Modal.create("create-campaign", "Create Campaign")
-				.addComponents(ActionRow.of(name), ActionRow.of(description), ActionRow.of(tags))
-				.build();
-
-		event.replyModal(modal).queue();
+		event.replyModal(ModalTemplates.createCampaign()).queue();
 	}
 
 	public static void CreateCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
@@ -135,11 +111,8 @@ public class CampaignManagement {
 			campaignDAO.createCampaign(campaign);
 			event.getHook().sendMessage("Campaign Created Successfully.").setEphemeral(true).queue();
 			guild.getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
-					.addContent("**NEW CAMPAIGN**").setEmbeds(new EmbedBuilder()
-							.setFooter("By " + event.getUser().getEffectiveName(), event.getUser().getAvatarUrl())
-							.setTitle(String.format("**%s**", campaignName))
-							.appendDescription(campaignDescription)
-							.build())
+					.addContent("**NEW CAMPAIGN**")
+					.setEmbeds(EmbedTemplates.newCampaignAnnouncement(event, campaignName, campaignDescription))
 					.addActionRow(Button.link(post.getMessage().getJumpUrl(), "Go To Campaign"))
 					.build())
 					.queue();
@@ -159,14 +132,7 @@ public class CampaignManagement {
 	}
 
 	public static void RenameCampaignModal(ButtonInteractionEvent event) {
-		TextInput newNameBox = TextInput
-				.create("rename-text", "New Campaign Name",
-						TextInputStyle.SHORT)
-				.setMinLength(3).setMaxLength(25).setRequired(true).build();
-		Modal modal = Modal
-				.create("new-campaign-name", "Rename Campaign")
-				.addComponents(ActionRow.of(newNameBox)).build();
-		event.replyModal(modal).queue();
+		event.replyModal(ModalTemplates.renameCampaign()).queue();
 	}
 
 	public static void RenameCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
@@ -201,17 +167,9 @@ public class CampaignManagement {
 	}
 
 	public static void DeleteCampaignModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign campaign = campaignDAO
-				.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
-		TextInput nameBox = TextInput
-				.create("campaign-delete-name", "Enter the name of the campaign to confirm:",
-						TextInputStyle.SHORT)
-				.setRequired(true).setPlaceholder(campaign.getCampaign_name()).build();
-		Modal deleteModal = Modal
-				.create("campaign-delete:" + campaign.getCategory_id(),
-						String.format("Delete %s?", campaign.getCampaign_name()))
-				.addComponents(ActionRow.of(nameBox)).build();
-		event.replyModal(deleteModal).queue();
+		Campaign campaign = campaignDAO.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
+
+		event.replyModal(ModalTemplates.deleteCampaign(campaign)).queue();
 	}
 
 	public static void DeleteCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
