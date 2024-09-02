@@ -1,4 +1,4 @@
-package com.byteryse.DTO;
+package com.byteryse.DTOs;
 
 enum Status {
 	OPEN,

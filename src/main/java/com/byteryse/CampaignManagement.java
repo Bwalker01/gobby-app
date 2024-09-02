@@ -3,8 +3,9 @@ package com.byteryse;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.byteryse.DAO.CampaignDAO;
-import com.byteryse.DTO.Campaign;
+import com.byteryse.Database.CampaignDAO;
+import com.byteryse.DTOs.Campaign;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
