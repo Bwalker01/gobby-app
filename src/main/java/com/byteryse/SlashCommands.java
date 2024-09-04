@@ -2,9 +2,7 @@ package com.byteryse;
 
 import javax.annotation.Nonnull;
 
-import com.byteryse.DAO.CampaignDAO;
-import com.byteryse.Database.DatabaseController;
-
+import com.byteryse.Database.CampaignDAO;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -13,8 +11,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 public class SlashCommands extends ListenerAdapter {
 	private CampaignDAO campaignDAO;
 
-	public SlashCommands(DatabaseController dbCon) {
-		this.campaignDAO = new CampaignDAO(dbCon);
+	public SlashCommands() {
+		this.campaignDAO = new CampaignDAO();
 	}
 
 	@Override

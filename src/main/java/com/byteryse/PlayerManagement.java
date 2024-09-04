@@ -4,8 +4,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.byteryse.DAO.CampaignDAO;
-import com.byteryse.DTO.Campaign;
+import com.byteryse.DTOs.Campaign;
+import com.byteryse.Database.CampaignDAO;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -133,7 +133,7 @@ public class PlayerManagement {
 				.sendMessage(
 						String.format(
 								"You have been accepted into the campaign **%s**. You'll now be able to find it in the server categories!",
-								campaign.getName()))
+								campaign.getCampaign_name()))
 				.queue();
 	}
 
