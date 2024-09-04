@@ -186,7 +186,7 @@ public class CampaignManagement {
 		post.getManager().setName(newName).queue();
 		post.sendMessage(String.format("***%s** has changed the campaign name from **%s** to **%s**.*",
 				event.getUser().getAsMention(), oldName, newName)).queue();
-		campaign.setName(newName);
+		campaign.setCampaign_name(newName);
 		campaignDAO.updateCampaign(campaign);
 	}
 
@@ -196,17 +196,17 @@ public class CampaignManagement {
 		TextInput nameBox = TextInput
 				.create("campaign-delete-name", "Enter the name of the campaign to confirm:",
 						TextInputStyle.SHORT)
-				.setRequired(true).setPlaceholder(campaign.getName()).build();
+				.setRequired(true).setPlaceholder(campaign.getCampaign_name()).build();
 		Modal deleteModal = Modal
 				.create("campaign-delete:" + campaign.getCategory_id(),
-						String.format("Delete %s?", campaign.getName()))
+						String.format("Delete %s?", campaign.getCampaign_name()))
 				.addComponents(ActionRow.of(nameBox)).build();
 		event.replyModal(deleteModal).queue();
 	}
 
 	public static void DeleteCampaign(ModalInteractionEvent event, CampaignDAO campaignDAO) {
 		Campaign campaign = campaignDAO.getCampaignByCategory(event.getModalId().substring(16));
-		if (event.getValue("campaign-delete-name").getAsString().equals(campaign.getName())) {
+		if (event.getValue("campaign-delete-name").getAsString().equals(campaign.getCampaign_name())) {
 			Category categoryToDelete = event.getGuild().getCategoryById(campaign.getCategory_id());
 			for (GuildChannel channel : categoryToDelete.getChannels()) {
 				channel.delete().queue();
@@ -259,7 +259,7 @@ public class CampaignManagement {
 												event.getUser().getAvatarUrl())
 										.setTitle(String.format(
 												"**%s**",
-												campaign.getName()))
+												campaign.getCampaign_name()))
 										.appendDescription("*Now accepting join submissions.*")
 										.build())
 						.addActionRow(
@@ -301,7 +301,7 @@ public class CampaignManagement {
 												event.getUser().getAvatarUrl())
 										.setTitle(String.format(
 												"**%s**",
-												campaign.getName()))
+												campaign.getCampaign_name()))
 										.appendDescription("*Submissions now closed.*")
 										.build())
 						.addActionRow(

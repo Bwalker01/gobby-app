@@ -133,7 +133,7 @@ public class PlayerManagement {
 				.sendMessage(
 						String.format(
 								"You have been accepted into the campaign **%s**. You'll now be able to find it in the server categories!",
-								campaign.getName()))
+								campaign.getCampaign_name()))
 				.queue();
 	}
 

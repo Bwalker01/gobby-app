@@ -1,48 +1,41 @@
 package com.byteryse.DTOs;
 
-enum Status {
-	OPEN,
-	CLOSED,
-	PREPARING;
-
-	String getAsString() {
-		return this.toString();
-	}
-}
-
 public class Campaign {
-	private String name;
+	private String campaign_name;
 	private String role_id;
 	private String category_id;
-	private Status status;
+	private String status;
 	private String post_id;
 	private String dm_role_id;
 
 	public Campaign(String name, String role_id, String category_id, String post_id, String dm_role_id) {
-		this.name = name;
+		this.campaign_name = name;
 		this.role_id = role_id;
 		this.category_id = category_id;
 		this.post_id = post_id;
 		this.dm_role_id = dm_role_id;
-		this.status = Status.PREPARING;
+		this.status = "PREPARING";
 	}
 
 	public Campaign(String name, String role_id, String category_id, String status,
 			String post_id, String dm_role_id) {
-		this.name = name;
+		this.campaign_name = name;
 		this.role_id = role_id;
-		this.status = Status.valueOf(status);
+		this.status = status;
 		this.category_id = category_id;
 		this.post_id = post_id;
 		this.dm_role_id = dm_role_id;
+	}
+
+	public Campaign() {
 	}
 
 	public String getCategory_id() {
 		return category_id;
 	}
 
-	public String getName() {
-		return name;
+	public String getCampaign_name() {
+		return campaign_name;
 	}
 
 	public String getPost_id() {
@@ -53,7 +46,7 @@ public class Campaign {
 		return role_id;
 	}
 
-	public Status getStatus() {
+	public String getStatus() {
 		return status;
 	}
 
@@ -66,18 +59,38 @@ public class Campaign {
 	}
 
 	public void open() {
-		this.status = Status.OPEN;
+		this.status = "OPEN";
 	}
 
 	public void close() {
-		this.status = Status.CLOSED;
+		this.status = "CLOSED";
 	}
 
 	public boolean isOpen() {
-		return this.status.equals(Status.OPEN);
+		return this.status.equals("OPEN");
 	}
 
-	public void setName(String newName) {
-		this.name = newName;
+	public void setCampaign_name(String name) {
+		this.campaign_name = name;
+	}
+
+	public void setCategory_id(String category_id) {
+		this.category_id = category_id;
+	}
+
+	public void setDm_role_id(String dm_role_id) {
+		this.dm_role_id = dm_role_id;
+	}
+
+	public void setPost_id(String post_id) {
+		this.post_id = post_id;
+	}
+
+	public void setRole_id(String role_id) {
+		this.role_id = role_id;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 }
