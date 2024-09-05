@@ -218,11 +218,7 @@ public class CampaignManagement {
 						.filter(message -> message.getContentRaw().equals("Join Applications"))
 						.forEach(message -> message.delete().queue()));
 		getGuild(event).getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
-				.addContent("**NEW UPDATE**").setEmbeds(new EmbedBuilder()
-						.setFooter("DM: " + event.getUser().getEffectiveName(), event.getUser().getAvatarUrl())
-						.setTitle(String.format("**%s**", campaign.getCampaign_name()))
-						.appendDescription("*Now accepting join submissions.*")
-						.build())
+				.addContent("**NEW UPDATE**").setEmbeds()
 				.addActionRow(Button.link(post.retrieveStartMessage().complete().getJumpUrl(), "Go To Campaign"))
 				.build())
 				.queue();
