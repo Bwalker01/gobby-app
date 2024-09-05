@@ -9,7 +9,6 @@ import com.byteryse.DTOs.Campaign;
 import com.byteryse.Templates.EmbedTemplates;
 import com.byteryse.Templates.ModalTemplates;
 
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -31,6 +30,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
+@SuppressWarnings("null")
 public class CampaignManagement {
 	private static final String CAMPAIGN_FORUM = System.getenv("CAMPAIGN_FORUM");
 	private static final String GAME_ANNOUNCEMENTS = System.getenv("ANNOUNCEMENT_CHANNEL");
@@ -245,18 +245,11 @@ public class CampaignManagement {
 				"======================================\n:red_circle:  Join submissions have been closed  :red_circle:\n======================================")
 				.queue();
 		event.getMessage().getStartedThread().delete().queue();
-		getGuild(event)
-				.getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
-						.addContent("**NEW UPDATE**").setEmbeds(
-								new EmbedBuilder()
-										.setFooter("DM: " + event.getUser().getEffectiveName(),
-												event.getUser().getAvatarUrl())
-										.setTitle(String.format("**%s**", campaign.getCampaign_name()))
-										.appendDescription("*Submissions now closed.*")
-										.build())
-						.addActionRow(
-								Button.link(post.retrieveStartMessage().complete().getJumpUrl(), "Go To Campaign"))
-						.build())
+		getGuild(event).getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
+				.addContent("**NEW UPDATE**")
+				.setEmbeds(EmbedTemplates.closeCampaignAnnouncement(event, campaign))
+				.addActionRow(Button.link(post.retrieveStartMessage().complete().getJumpUrl(), "Go To Campaign"))
+				.build())
 				.queue();
 		campaignDAO.updateCampaign(campaign);
 	}

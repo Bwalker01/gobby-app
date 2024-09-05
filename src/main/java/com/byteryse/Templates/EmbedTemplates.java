@@ -29,4 +29,13 @@ public class EmbedTemplates {
 
 		return newEmbed.build();
 	}
+
+	public static MessageEmbed closeCampaignAnnouncement(ButtonInteractionEvent event, Campaign campaign) {
+		EmbedBuilder newEmbed = new EmbedBuilder()
+				.setFooter("DM: " + event.getUser().getEffectiveName(), event.getUser().getAvatarUrl())
+				.setTitle(String.format("**%s**", campaign.getCampaign_name()))
+				.appendDescription("*Submissions have been closed.*");
+
+		return newEmbed.build();
+	}
 }
