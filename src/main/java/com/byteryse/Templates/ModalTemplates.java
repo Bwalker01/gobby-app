@@ -25,7 +25,8 @@ public class ModalTemplates {
 		 * Used to name the Category, Roles and Post associated with the campaign.
 		 * Saved in the database.
 		 */
-		TextInput name = TextInput.create("name", "Name", TextInputStyle.SHORT)
+		TextInput name = TextInput
+				.create("name", "Name", TextInputStyle.SHORT)
 				.setPlaceholder("The name of your campaign")
 				.setMinLength(3)
 				.setMaxLength(25)
@@ -38,7 +39,8 @@ public class ModalTemplates {
 		 * Only shown within the initial announcement and the forum post description.
 		 * Not saved elsewhere.
 		 */
-		TextInput description = TextInput.create("description", "Description", TextInputStyle.PARAGRAPH)
+		TextInput description = TextInput
+				.create("description", "Description", TextInputStyle.PARAGRAPH)
 				.setPlaceholder("A short(ish) description.")
 				.setMinLength(1)
 				.setMaxLength(500)
@@ -50,14 +52,15 @@ public class ModalTemplates {
 		 * Only shown within the forum post description.
 		 * Not saved elsewhere.
 		 */
-		TextInput tags = TextInput.create("tags", "Player Requirements", TextInputStyle.PARAGRAPH)
-				.setPlaceholder(
-						"Example:\n- New/Veteran/All Players\n- Serious/Fun/Novelty Campaign\n- RP/Combat Heavy")
+		TextInput tags = TextInput
+				.create("tags", "Player Requirements", TextInputStyle.PARAGRAPH)
+				.setPlaceholder("Example:\n- New/Veteran/All Players\n- Serious/Novelty Campaign\n- RP/Combat Heavy")
 				.setMinLength(1)
 				.setMaxLength(100)
 				.build();
 
-		Modal modal = Modal.create("create-campaign", "Create Campaign")
+		Modal modal = Modal
+				.create("create-campaign", "Create Campaign")
 				.addComponents(ActionRow.of(name), ActionRow.of(description), ActionRow.of(tags))
 				.build();
 
@@ -77,13 +80,14 @@ public class ModalTemplates {
 		 * roles and categories in this server to prevent overlap with any of them.
 		 */
 		TextInput newName = TextInput
-				.create("rename-text", "New Campaign Name",
-						TextInputStyle.SHORT)
-				.setMinLength(3).setMaxLength(25).setRequired(true).build();
+				.create("rename-text", "New Campaign Name", TextInputStyle.SHORT)
+				.setMinLength(3).setMaxLength(25).setRequired(true)
+				.build();
 
 		Modal modal = Modal
 				.create("new-campaign-name", "Rename Campaign")
-				.addComponents(ActionRow.of(newName)).build();
+				.addComponents(ActionRow.of(newName))
+				.build();
 
 		return modal;
 	}
@@ -101,14 +105,41 @@ public class ModalTemplates {
 		 * intentional and that the user is deleting the right one.
 		 */
 		TextInput name = TextInput
-				.create("campaign-delete-name", "Enter the name of the campaign to confirm:",
-						TextInputStyle.SHORT)
-				.setRequired(true).setPlaceholder(campaign.getCampaign_name()).build();
+				.create("campaign-delete-name", "Enter the name of the campaign to confirm:", TextInputStyle.SHORT)
+				.setRequired(true).setPlaceholder(campaign.getCampaign_name())
+				.build();
 
 		Modal modal = Modal
 				.create("campaign-delete:" + campaign.getCategory_id(),
 						String.format("Delete %s?", campaign.getCampaign_name()))
-				.addComponents(ActionRow.of(name)).build();
+				.addComponents(ActionRow.of(name))
+				.build();
+
+		return modal;
+	}
+
+	/**
+	 * Info modal for players to give their prior experience in other campaigns
+	 * and/or their own expectations for the campaign they're joining to help the DM
+	 * to decide on which players are the best fit.
+	 * 
+	 * @return 1-ActionRow modal
+	 */
+	public static Modal joinCampaign(Campaign campaign) {
+		/**
+		 * Player input - optional
+		 * Allows the player to enter how experienced they are with DnD and what they
+		 * might be looking for in the campaign they're entering.
+		 */
+		TextInput subject = TextInput
+				.create("request-text", "Any Experience and/or Expectations?", TextInputStyle.PARAGRAPH)
+				.setMaxLength(500).setRequired(false)
+				.build();
+
+		Modal modal = Modal
+				.create("join-request:" + campaign.getCategory_id(), "Tell the DM a bit about you")
+				.addComponents(ActionRow.of(subject))
+				.build();
 
 		return modal;
 	}
