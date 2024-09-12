@@ -73,10 +73,10 @@ public class EmbedTemplates {
 	 * @param event - Modal Event
 	 * @return MessageEmbed
 	 */
-	public static MessageEmbed joinRequest(ModalInteractionEvent event) {
+	public static MessageEmbed joinRequest(ModalInteractionEvent event, String text) {
 		EmbedBuilder newEmbed = new EmbedBuilder()
 				.setTitle(event.getUser().getEffectiveName())
-				.setDescription(event.getValue("request-text").getAsString());
+				.setDescription(text);
 
 		return newEmbed.build();
 	}
