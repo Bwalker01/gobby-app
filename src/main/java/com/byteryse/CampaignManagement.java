@@ -168,6 +168,10 @@ public class CampaignManagement {
 
 	public static void DeleteCampaignModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
 		Campaign campaign = campaignDAO.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
+		if (campaign.isOpen()) {
+			event.reply("Please close your campaign before you delete it.").setEphemeral(true).queue();
+			return;
+		}
 
 		event.replyModal(ModalTemplates.deleteCampaign(campaign)).queue();
 	}
@@ -210,7 +214,7 @@ public class CampaignManagement {
 		post.editMessageComponentsById(campaign.getPost_id(), ActionRow.of(buttons.get(0).asEnabled()))
 				.queue();
 		post.sendMessage(
-				"==============================\n:green_circle:  Submissions Opened  :green_circle:\n==============================")
+				"===========================\n:green_circle:  Submissions Opened  :green_circle:\n===========================")
 				.queue();
 		event.getMessage().createThreadChannel("Join Applications").complete();
 		event.getChannel().getHistoryFromBeginning(50).queue(
@@ -242,7 +246,7 @@ public class CampaignManagement {
 		post.editMessageComponentsById(campaign.getPost_id(), ActionRow.of(buttons.get(0).asDisabled()))
 				.queue();
 		post.sendMessage(
-				"==============================\n:red_circle:  Submissions Closed  :red_circle:\n==============================")
+				"===========================\n:red_circle:  Submissions Closed  :red_circle:\n===========================")
 				.queue();
 		event.getMessage().getStartedThread().delete().queue();
 		getGuild(event).getNewsChannelById(GAME_ANNOUNCEMENTS).sendMessage(new MessageCreateBuilder()
