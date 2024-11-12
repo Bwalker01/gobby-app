@@ -57,6 +57,10 @@ public class InteractionRouting extends ListenerAdapter {
 		String[] interactionArgs = event.getComponentId().split(":");
 		String buttonId = interactionArgs[0];
 		switch (buttonId) {
+			case "open-close":
+				event.deferEdit().queue();
+				CampaignManagement.OpenCampaign(event, campaignDAO);
+				return;
 			case "open":
 				event.deferEdit().queue();
 				CampaignManagement.OpenCampaign(event, campaignDAO);
