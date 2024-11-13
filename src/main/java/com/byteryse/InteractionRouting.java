@@ -8,10 +8,10 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-public class SlashCommands extends ListenerAdapter {
+public class InteractionRouting extends ListenerAdapter {
 	private CampaignDAO campaignDAO;
 
-	public SlashCommands() {
+	public InteractionRouting() {
 		this.campaignDAO = new CampaignDAO();
 	}
 
