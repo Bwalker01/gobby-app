@@ -7,7 +7,7 @@ public class Application {
 
 	public static void main(String[] args) throws Exception {
 		JDA api = JDABuilder.createDefault(System.getenv("DISCORD_TOKEN")).build();
-		api.addEventListener(new InteractionRouting());
+		api.addEventListener(new SlashCommands());
 		api.addEventListener(new EventListeners());
 	}
 }
