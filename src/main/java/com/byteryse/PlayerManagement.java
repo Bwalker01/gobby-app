@@ -1,13 +1,13 @@
 package com.byteryse;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.byteryse.DTOs.Campaign;
 import com.byteryse.Database.CampaignDAO;
+import com.byteryse.Templates.EmbedTemplates;
+import com.byteryse.Templates.ModalTemplates;
 
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -19,11 +19,9 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
+@SuppressWarnings("null")
 public class PlayerManagement {
 
 	public static void JoinRequestModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
@@ -51,14 +49,7 @@ public class PlayerManagement {
 			}
 
 			if (usersApplications.size() == 0) {
-				TextInput subject = TextInput
-						.create("request-text", "Your Experience, Preferences, etc",
-								TextInputStyle.PARAGRAPH)
-						.setMaxLength(500).setRequired(false).build();
-				Modal modal = Modal
-						.create("join-request:" + campaign.getCategory_id(), "Tell The DM A Bit About You")
-						.addComponents(ActionRow.of(subject)).build();
-				event.replyModal(modal).queue();
+				event.replyModal(ModalTemplates.joinCampaign(campaign)).queue();
 			} else {
 				event.reply("You're already applied!").setEphemeral(true).queue();
 			}
@@ -71,16 +62,12 @@ public class PlayerManagement {
 		TextChannel dmScreen = getDmScreen(event, event.getModalId().substring(13));
 		dmScreen.getHistoryFromBeginning(1).queue(history -> {
 			ThreadChannel applicationThreads = history.getRetrievedHistory().get(0).getStartedThread();
-			applicationThreads.sendMessage(
-					new MessageCreateBuilder()
-							.setContent(
-									String.format("**%s** has applied to join:", event.getUser().getAsMention()))
-							.addEmbeds(
-									new EmbedBuilder().setTitle(event.getUser().getEffectiveName())
-											.setDescription(event.getValue("request-text").getAsString()).build())
-							.addActionRow(Button.success("join-accept:" + event.getUser().getId(), "Accept"),
-									Button.danger("join-reject:" + event.getUser().getId(), "Reject"))
-							.build())
+			applicationThreads.sendMessage(new MessageCreateBuilder()
+					.setContent(String.format("**%s** has applied to join:", event.getUser().getAsMention()))
+					.addEmbeds(EmbedTemplates.joinRequest(event, event.getValue("request-text").getAsString()))
+					.addActionRow(Button.success("join-accept:" + event.getUser().getId(), "Accept"),
+							Button.danger("join-reject:" + event.getUser().getId(), "Reject"))
+					.build())
 					.queue();
 			event.getHook().sendMessage(event.getUser().getAsMention() + " has requested to join!").queue();
 		});
@@ -94,7 +81,7 @@ public class PlayerManagement {
 				.forEach(member -> players.add(ActionRow.of(Button.danger("remove-player:" + member.getId(),
 						"Kick " + member.getUser().getEffectiveName()))));
 		if (players.isEmpty()) {
-			event.getHook().sendMessage("There are no players in your campaign yet!").setEphemeral(true).queue();
+			event.getHook().sendMessage("There are no players in your campaign!").setEphemeral(true).queue();
 		} else {
 			event.getHook().sendMessage("").addComponents(players).setEphemeral(true).queue();
 		}
@@ -124,16 +111,14 @@ public class PlayerManagement {
 		event.getMessage()
 				.editMessageComponents(ActionRow.of(Button.secondary("dismiss-request", "Dismiss")))
 				.queue();
-		MessageEmbed acceptOldEmbed = event.getMessage().getEmbeds().get(0);
-		EmbedBuilder acceptNewEmbed = new EmbedBuilder().setColor(Color.GREEN)
-				.setTitle(acceptOldEmbed.getTitle()).setDescription(acceptOldEmbed.getDescription())
-				.setFooter("Accepted");
-		event.getMessage().editMessageEmbeds(acceptNewEmbed.build()).queue();
+		MessageEmbed oldEmbed = event.getMessage().getEmbeds().get(0);
+		event.getMessage()
+				.editMessageEmbeds(EmbedTemplates.joinAccept(event, oldEmbed.getTitle(), oldEmbed.getDescription()))
+				.queue();
 		user.getUser().openPrivateChannel().complete()
-				.sendMessage(
-						String.format(
-								"You have been accepted into the campaign **%s**. You'll now be able to find it in the server categories!",
-								campaign.getCampaign_name()))
+				.sendMessage(String.format(
+						"You have been accepted into the campaign **%s**. You'll now be able to find it in the server categories!",
+						campaign.getCampaign_name()))
 				.queue();
 	}
 
@@ -141,11 +126,10 @@ public class PlayerManagement {
 		event.getMessage()
 				.editMessageComponents(ActionRow.of(Button.secondary("dismiss-request", "Dismiss")))
 				.queue();
-		MessageEmbed rejectOldEmbed = event.getMessage().getEmbeds().get(0);
-		EmbedBuilder rejectNewEmbed = new EmbedBuilder().setColor(Color.RED)
-				.setTitle(rejectOldEmbed.getTitle()).setDescription(rejectOldEmbed.getDescription())
-				.setFooter("Rejected");
-		event.getMessage().editMessageEmbeds(rejectNewEmbed.build()).queue();
+		MessageEmbed oldEmbed = event.getMessage().getEmbeds().get(0);
+		event.getMessage()
+				.editMessageEmbeds(EmbedTemplates.joinReject(event, oldEmbed.getTitle(), oldEmbed.getDescription()))
+				.queue();
 	}
 
 	private static TextChannel getDmScreen(GenericInteractionCreateEvent event, String categoryId) {
