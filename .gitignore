@@ -25,3 +25,4 @@ target
 
 #Project Specific
 src\main\java\com\byteryse\CommandCreator.java
+src\main\java\com\byteryse\Tests.java
