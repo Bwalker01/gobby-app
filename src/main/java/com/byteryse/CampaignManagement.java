@@ -1,5 +1,8 @@
 package com.byteryse;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +26,15 @@ import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
@@ -276,6 +284,52 @@ public class CampaignManagement {
 				event.getMessage().getActionRows().get(0).getButtons());
 		oldButtons.set(3, Button.danger("campaign-settings", "Settings"));
 		event.getHook().editMessageComponentsById(event.getMessageId(), ActionRow.of(oldButtons)).queue();
+	}
+
+	public static void ScheduleSessionDateSelect(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
+		Campaign campaign = campaignDAO.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
+
+		StringSelectMenu.Builder dateMenu = StringSelectMenu
+				.create(String.format("schedule-session:%s", campaign.getCategory_id()));
+
+		DateTimeFormatter dateLabel = DateTimeFormatter.ofPattern("EE dd MMM");
+		DateTimeFormatter dateLong = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy");
+		DateTimeFormatter dateId = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		LocalDateTime date = LocalDateTime.now();
+
+		for (int i = 0; i < 22; i++) {
+			dateMenu.addOption(
+					dateLabel.format(date.plusDays(i)),
+					dateId.format(date.plusDays(i)),
+					dateLong.format(date.plusDays(i)));
+		}
+
+		event.reply("Pick a date:")
+				.addActionRow(dateMenu.build())
+				.setEphemeral(true)
+				.queue();
+	}
+
+	public static void ScheduleSessionTimeModal(StringSelectInteractionEvent event, CampaignDAO campaignDAO) {
+		String[] eventArgs = event.getComponentId().split(":");
+
+		TextInput timeEntry = TextInput.create("time-entry", "Time: (24h)", TextInputStyle.SHORT)
+				.setPlaceholder("e.g: 1830")
+				.setMinLength(4)
+				.setMaxLength(4)
+				.build();
+
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("d MMM");
+		String selectedDate = event.getValues().get(0);
+
+		Modal modal = Modal
+				.create(String.format("schedule-session:%s:%s", eventArgs[1], selectedDate),
+						String.format("Enter a time for %s.", dtf.format(LocalDate.parse(selectedDate))))
+				.addComponents(ActionRow.of(timeEntry))
+				.build();
+
+		event.getMessage().delete().queue();
+		event.replyModal(modal).queue();
 	}
 
 	private static ThreadChannel getPost(GenericInteractionCreateEvent event, Campaign campaign) {

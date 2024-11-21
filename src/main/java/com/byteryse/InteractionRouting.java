@@ -6,6 +6,7 @@ import com.byteryse.Database.CampaignDAO;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class InteractionRouting extends ListenerAdapter {
@@ -106,9 +107,23 @@ public class InteractionRouting extends ListenerAdapter {
 				event.deferEdit().queue();
 				PlayerManagement.KickPlayer(event, campaignDAO);
 				return;
+			case "schedule":
+				CampaignManagement.ScheduleSessionDateSelect(event, campaignDAO);
+				return;
 			default:
 				event.reply("Something went wrong.").setEphemeral(true).queue();
 				System.out.println("Error; button not found\nButton ID: " + buttonId);
+				return;
+		}
+	}
+
+	@Override
+	public void onStringSelectInteraction(@Nonnull StringSelectInteractionEvent event) {
+		String[] interactionArgs = event.getComponentId().split(":");
+		String menuId = interactionArgs[0];
+		switch (menuId) {
+			case "schedule-session":
+				CampaignManagement.ScheduleSessionTimeModal(event, campaignDAO);
 				return;
 		}
 	}

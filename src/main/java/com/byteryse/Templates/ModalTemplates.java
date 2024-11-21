@@ -143,4 +143,26 @@ public class ModalTemplates {
 
 		return modal;
 	}
+
+	public static Modal scheduleSession(Campaign campaign) {
+		TextInput date = TextInput
+				.create("date-text", "Session Date: (--/--/--)", TextInputStyle.SHORT)
+				.setMaxLength(8)
+				.setMinLength(8)
+				.setRequired(true)
+				.build();
+
+		TextInput time = TextInput
+				.create("time-text", "Session Time: (--:-- 24h)", TextInputStyle.SHORT)
+				.setMaxLength(5)
+				.setMinLength(5)
+				.setRequired(true)
+				.build();
+
+		Modal modal = Modal
+				.create("schedule-session:" + campaign.getCategory_id(), "Schedule Session")
+				.addComponents(ActionRow.of(date), ActionRow.of(time))
+				.build();
+		return modal;
+	}
 }
