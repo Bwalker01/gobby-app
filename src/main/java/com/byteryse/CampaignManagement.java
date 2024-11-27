@@ -3,6 +3,7 @@ package com.byteryse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import com.byteryse.Templates.ModalTemplates;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
@@ -43,6 +45,8 @@ public class CampaignManagement {
 	private static final String CAMPAIGN_FORUM = System.getenv("CAMPAIGN_FORUM");
 	private static final String GAME_ANNOUNCEMENTS = System.getenv("ANNOUNCEMENT_CHANNEL");
 	private static final String GAME_MASTER_ROLE = System.getenv("DM_ROLE");
+	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy");
+	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
 
 	public static void CampaignCreationModal(SlashCommandInteractionEvent event) {
 		if (!getMember(event).getRoles().contains(getGuild(event).getRoleById(GAME_MASTER_ROLE))) {
@@ -286,11 +290,9 @@ public class CampaignManagement {
 		event.getHook().editMessageComponentsById(event.getMessageId(), ActionRow.of(oldButtons)).queue();
 	}
 
-	public static void ScheduleSessionDateSelect(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
-		Campaign campaign = campaignDAO.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
-
+	public static void ScheduleSessionDateSelect(ButtonInteractionEvent event) {
 		StringSelectMenu.Builder dateMenu = StringSelectMenu
-				.create(String.format("schedule-session:%s", campaign.getCategory_id()));
+				.create("schedule-session");
 
 		DateTimeFormatter dateLabel = DateTimeFormatter.ofPattern("EE dd MMM");
 		DateTimeFormatter dateLong = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy");
@@ -310,9 +312,7 @@ public class CampaignManagement {
 				.queue();
 	}
 
-	public static void ScheduleSessionTimeModal(StringSelectInteractionEvent event, CampaignDAO campaignDAO) {
-		String[] eventArgs = event.getComponentId().split(":");
-
+	public static void ScheduleSessionTimeModal(StringSelectInteractionEvent event) {
 		TextInput timeEntry = TextInput.create("time-entry", "Time: (24h)", TextInputStyle.SHORT)
 				.setPlaceholder("e.g: 1830")
 				.setMinLength(4)
@@ -323,13 +323,75 @@ public class CampaignManagement {
 		String selectedDate = event.getValues().get(0);
 
 		Modal modal = Modal
-				.create(String.format("schedule-session:%s:%s", eventArgs[1], selectedDate),
+				.create(String.format("schedule-session:%s", selectedDate),
 						String.format("Enter a time for %s.", dtf.format(LocalDate.parse(selectedDate))))
 				.addComponents(ActionRow.of(timeEntry))
 				.build();
 
 		event.getMessage().delete().queue();
 		event.replyModal(modal).queue();
+	}
+
+	public static void ConfirmSchedule(ModalInteractionEvent event, CampaignDAO campaignDAO) {
+		String[] interactionArgs = event.getModalId().split(":");
+		String timeString = String.format("%sT%s:%s:00",
+				interactionArgs[1],
+				event.getValue("time-entry").getAsString().substring(0, 2),
+				event.getValue("time-entry").getAsString().substring(2, 4));
+
+		LocalDateTime parsedTime;
+
+		try {
+			parsedTime = LocalDateTime.parse(timeString);
+		} catch (DateTimeParseException e) {
+			e.printStackTrace();
+			event.getHook()
+					.sendMessage(String.format("%s is not a valid time. Try again and enter a valid time code.",
+							event.getValue("time-entry").getAsString()))
+					.setEphemeral(true).queue();
+			return;
+		}
+
+		if (LocalDateTime.now().isAfter(parsedTime)) {
+			event.getHook()
+					.sendMessage(String.format("%s is in the past. Please schedule for a time in the future.",
+							TIME_FORMAT.format(parsedTime)))
+					.setEphemeral(true).queue();
+			return;
+		}
+
+		if (LocalDateTime.now().plusMinutes(45).isAfter(parsedTime)) {
+			event.getHook().sendMessage("Please schedule for at least 45 minutes ahead.")
+					.setEphemeral(true).queue();
+			return;
+		}
+
+		event.getHook().sendMessage(
+				String.format("Scheduling next session for:\n**%s** at **%s**\nIs this correct?",
+						DATE_FORMAT.format(parsedTime),
+						TIME_FORMAT.format(parsedTime).toUpperCase()))
+				.setEphemeral(true)
+				.addActionRow(
+						Button.success(String.format("confirm-schedule:%s", timeString), "Yup!"),
+						Button.danger("reject-schedule", "Redo."))
+				.queue();
+	}
+
+	public static void SetNextSession(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
+		Campaign campaign = campaignDAO.getCampaignByCategory(event.getChannel().asTextChannel().getParentCategoryId());
+		String timeString = String.format("%s:%s:00", event.getComponentId().split(":")[1],
+				event.getComponentId().split(":")[2]);
+
+		LocalDateTime nextSessionDate = LocalDateTime.parse(timeString);
+
+		TextChannel updates = getGuild(event).getCategoryById(campaign.getCategory_id()).getTextChannels().stream()
+				.filter(channel -> channel.getName().equals("updates")).findFirst().get();
+
+		Message nextSessionMessage = updates.sendMessage(String.format(
+				"**Next Session:**\n*%s, %s*",
+				TIME_FORMAT.format(nextSessionDate).toUpperCase(),
+				DATE_FORMAT.format(nextSessionDate))).complete();
+		nextSessionMessage.pin().queue();
 	}
 
 	private static ThreadChannel getPost(GenericInteractionCreateEvent event, Campaign campaign) {

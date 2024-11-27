@@ -47,6 +47,9 @@ public class InteractionRouting extends ListenerAdapter {
 			case "campaign-delete":
 				CampaignManagement.DeleteCampaign(event, campaignDAO);
 				return;
+			case "schedule-session":
+				CampaignManagement.ConfirmSchedule(event, campaignDAO);
+				return;
 			default:
 				event.getHook().sendMessage("Something went wrong.").setEphemeral(true).queue();
 				System.out.println("Error; button not found\nModal ID: " + modalId);
@@ -108,7 +111,16 @@ public class InteractionRouting extends ListenerAdapter {
 				PlayerManagement.KickPlayer(event, campaignDAO);
 				return;
 			case "schedule":
-				CampaignManagement.ScheduleSessionDateSelect(event, campaignDAO);
+				CampaignManagement.ScheduleSessionDateSelect(event);
+				return;
+			case "confirm-schedule":
+				event.deferEdit().queue();
+				event.getMessage().delete().queue();
+				CampaignManagement.SetNextSession(event, campaignDAO);
+				return;
+			case "reject-schedule":
+				event.getMessage().delete().queue();
+				CampaignManagement.ScheduleSessionDateSelect(event);
 				return;
 			default:
 				event.reply("Something went wrong.").setEphemeral(true).queue();
@@ -123,7 +135,7 @@ public class InteractionRouting extends ListenerAdapter {
 		String menuId = interactionArgs[0];
 		switch (menuId) {
 			case "schedule-session":
-				CampaignManagement.ScheduleSessionTimeModal(event, campaignDAO);
+				CampaignManagement.ScheduleSessionTimeModal(event);
 				return;
 		}
 	}
