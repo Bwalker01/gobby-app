@@ -28,6 +28,9 @@ public class CampaignDAO extends DataAccessObject {
 		Connection conn = connect();
 		try {
 			List<Campaign> result = run.query(conn, sql, this.handler, value);
+			if (result.isEmpty()) {
+				return null;
+			}
 			if (result.size() > 1) {
 				System.err.println(String.format("Query returned too many results:\n%s",
 						result.stream().map(campaign -> campaign.getCampaign_name()).toList().toString()));

@@ -11,9 +11,12 @@ import com.byteryse.Templates.ModalTemplates;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -23,6 +26,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 @SuppressWarnings("null")
 public class PlayerManagement {
+	private static final String ACTIVE_PLAYER_ROLE = System.getenv("ACTIVE_PLAYER_ROLE");
 
 	public static void JoinRequestModal(ButtonInteractionEvent event, CampaignDAO campaignDAO) {
 		Campaign campaign = campaignDAO.getCampaignByPost(event.getMessageId());
@@ -130,6 +134,26 @@ public class PlayerManagement {
 		event.getMessage()
 				.editMessageEmbeds(EmbedTemplates.joinReject(event, oldEmbed.getTitle(), oldEmbed.getDescription()))
 				.queue();
+	}
+
+	public static void MakePlayerActive(GuildMemberRoleAddEvent event) {
+		Role activeRole = event.getGuild().getRoleById(ACTIVE_PLAYER_ROLE);
+
+		if (!event.getMember().getRoles().contains(activeRole)) {
+			event.getGuild()
+					.addRoleToMember(event.getMember(), activeRole)
+					.queue();
+		}
+	}
+
+	public static void MakePlayerInactive(GuildMemberRoleRemoveEvent event) {
+		Role activeRole = event.getGuild().getRoleById(ACTIVE_PLAYER_ROLE);
+
+		if (event.getMember().getRoles().contains(activeRole)) {
+			event.getGuild()
+					.removeRoleFromMember(event.getMember(), activeRole)
+					.queue();
+		}
 	}
 
 	private static TextChannel getDmScreen(GenericInteractionCreateEvent event, String categoryId) {
